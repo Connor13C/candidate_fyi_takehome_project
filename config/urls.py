@@ -39,6 +39,8 @@ urlpatterns += [
         SpectacularSwaggerView.as_view(url_name="api-schema"),
         name="api-docs",
     ),
+    #interviews
+    path("api/interviews/", include("candidate_fyi_takehome_project.interviews.urls", namespace="interviews")),
 ]
 
 if settings.DEBUG:
