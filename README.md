@@ -1,5 +1,86 @@
 # 🧠 Backend Take-Home: **Dynamic Interview Slot Generator (Django)**
 
+---
+
+## 🚀 Setup instructions
+
+### Using Docker
+
+This project includes Docker configuration for easy setup and consistent environments.
+
+1. **Make sure Docker and Docker Compose are installed on your system**
+
+2. **Build and start the application**
+   ```bash
+   # Build and start all services
+   make up
+   
+   # Or alternatively
+   docker compose -f docker-compose.local.yml up --remove-orphans -d
+   ```
+
+3. **Run migrations**
+   ```bash
+   make makemigrations
+   
+   # Or alternatively
+   docker exec candidate_fyi_takehome_project_local_django python manage.py makemigrations
+   ```
+   
+4. **Run migrations**
+   ```bash
+   make migrate
+   
+   # Or alternatively
+   docker exec candidate_fyi_takehome_project_local_django python manage.py migrate
+   ```
+
+5. **Create a superuser (optional)**
+   ```bash
+   make superuser
+   
+   # Or alternatively
+   docker exec -it candidate_fyi_takehome_project_local_django bash
+   python manage.py superuser
+   ```
+
+6. **Access the API**
+   
+   The API will be available at: http://localhost:8000/api/interviews/<id>/availability
+
+### Other Useful Commands
+
+```bash
+# Stop all containers
+make down
+
+# Or alternatively
+docker compose -f docker-compose.local.yml down
+```
+
+---
+
+## 📦 Design decisions
+- Interviews should only be available for weekdays so on Saturday and Sunday interviewers were considered to be busy the entire day
+- Interviews must start and end between 9AM-5PM (9-17) UTC based on mock_availability
+- Interviews must match date range of 7 days based on mock_availability
+- Interviewer names stored in Interviewer database table while utilizing Faker instead of mock_availability due to it being more standard and coherent
+
+
+---
+
+## Edge case write-up
+
+- What the case was:
+  - In mock_availability the random generator of busy time blocks could potentially produce two overlapping time blocks,
+  like 1PM-2PM and 1PM-3PM on the same day for a given interviewer which could be accidently sorted like [1PM-3PM, 1PM-2PM].
+- Why it mattered
+  - My solution to building a list of available times was to first build all list of all times that a interview could take place, then take the list of unavailable times from mock_availability and remove them. The conditions I was checking for while iterating through both arrays was if the end time of possible time block was less than or equal to the start time of the unavailable time block then I knew that I could add it to available time blocks and the second condition was the start time of the possible time block was greater than or equal to the end time of the available block then I would need to check the next blocked time. Since the unavailable time blocks could be sorted by start time but not end time it could allow some time blocks to be kept in that were not actually available.
+- How you handled it
+  - Once I determined through testing that this problem could occur I then chose to sort on two criteria instead of one with my primary on start time and my secondary on end time.
+---
+
+# Initial Specifications
 ## 🗂️ Overview
 
 In this take-home challenge, you'll implement a backend feature for a scheduling tool like [candidate.fyi](https://candidate.fyi/). The goal is to **dynamically generate potential interview time slots** by intersecting the real-time availability of multiple interviewers.
@@ -169,105 +250,5 @@ Submit a GitHub repo with:
     - Setup instructions
     - Design decisions
     - Your extra edge case write-up
-
----
-
-## 🚀 Running the Application
-
-### Option 1: Using Docker (Recommended)
-
-This project includes Docker configuration for easy setup and consistent environments.
-
-1. **Make sure Docker and Docker Compose are installed on your system**
-
-2. **Build and start the application**
-   ```bash
-   # Build and start all services
-   make up
-   
-   # Or alternatively
-   docker-compose up -d
-   ```
-
-3. **Run migrations**
-   ```bash
-   make migrate
-   
-   # Or alternatively
-   docker-compose exec web python manage.py migrate
-   ```
-
-4. **Create a superuser (optional)**
-   ```bash
-   make superuser
-   
-   # Or alternatively
-   docker-compose exec web python manage.py createsuperuser
-   ```
-
-5. **Load sample data (optional)**
-   ```bash
-   make loaddata
-   
-   # Or alternatively
-   docker-compose exec web python manage.py loaddata sample_data
-   ```
-
-6. **Access the API**
-   
-   The API will be available at: http://localhost:8000/api/interviews/<id>/availability
-
-### Other Useful Commands
-
-```bash
-# View logs
-make logs
-
-# Run tests
-make test
-
-# Stop all containers
-make down
-
-# Shell into web container
-make shell
-```
-
-### Option 2: Local Setup
-
-If you prefer running the application without Docker:
-
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd <repository-directory>
-   ```
-
-2. **Create and activate a virtual environment**
-   ```bash
-   python -m venv venv
-   
-   # On Windows
-   venv\Scripts\activate
-   
-   # On macOS/Linux
-   source venv/bin/activate
-   ```
-
-3. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Apply migrations**
-   ```bash
-   python manage.py migrate
-   ```
-
-5. **Run the development server**
-   ```bash
-   python manage.py runserver
-   ```
-
 
 
