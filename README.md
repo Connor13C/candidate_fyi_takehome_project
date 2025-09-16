@@ -41,7 +41,7 @@ This project includes Docker configuration for easy setup and consistent environ
    
    # Or alternatively
    docker exec -it candidate_fyi_takehome_project_local_django bash
-   python manage.py superuser
+   python manage.py createsuperuser
    ```
 
 6. **Access the API**
@@ -64,7 +64,7 @@ docker compose -f docker-compose.local.yml down
 - Interviews should only be available for weekdays so on Saturday and Sunday interviewers were considered to be busy the entire day
 - Interviews must start and end between 9AM-5PM (9-17) UTC based on mock_availability
 - Interviews must match date range of 7 days based on mock_availability
-- Interviewer names stored in Interviewer database table while utilizing Faker instead of mock_availability due to it being more standard and coherent
+- Interviewer names stored in Interviewer database table instead of mock_availability due to it being more standard and coherent
 
 
 ---
