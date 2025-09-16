@@ -1,22 +1,37 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from services.mock_availability import get_free_busy_data
+
 from candidate_fyi_takehome_project.interviews.helpers import get_all_available_time_blocks
 from candidate_fyi_takehome_project.interviews.models import InterviewTemplate
 # Create your views here.
 
-def interviews_availability(request, id):
-    interview = InterviewTemplate.objects.get(id=id)
-    interviewer_query = interview.interviewer.values()
-    interviewers = list(interviewer_query)
-    interviewer_ids = list(interviewer_query.values_list('id', flat=True))
-    duration = int(interview.duration)
-    busy_data = get_free_busy_data(interviewers)
-    json_resp = {
-        "interviewId": id,
-        "name": str(interview.name),
-        "durationMinutes": duration,
-        "interviewers": interviewers,
-        "availableSlots": get_all_available_time_blocks(interviewer_ids, duration)
+def interviews_availability(request, id:int):
+    """
+    Gets the InterviewTemplate table from the database adds all possible time blocks for a given interview duration
+    and returns it as a JsonResponse.
+    :param id: interviewId of InterviewTemplate
+    :returns: json response of interview Ex:
+    {
+        "interviewId": 1,
+        "name": "Technical Interview",
+        "durationMinutes": 60,
+        "interviewers": [
+            { "id": 1, "name": "Alice Johnson" },
+            { "id": 2, "name": "Bob Smith" }
+        ],
+        "availableSlots": [
+            {
+                "start": "2025-01-22T10:00:00Z",
+                "end": "2025-01-22T11:00:00Z"
+            },
+            {
+            "start": "2025-01-22T11:00:00Z",
+            "end": "2025-01-22T12:00:00Z"
+            }
+        ]
     }
-    return JsonResponse(json_resp, safe=False)
+    """
+    interview = InterviewTemplate.get_json_by_id(id)
+    interviewer_ids = [interviewer['id'] for interviewer in interview.get('interviewers', [])]
+    interview['availableSlots'] = get_all_available_time_blocks(interviewer_ids, interview['durationMinutes'])
+    return JsonResponse(interview)
