@@ -61,6 +61,7 @@ def get_all_possible_time_blocks(duration, dt=None) -> list[dict[str, datetime]]
         max_datetime += timedelta(days=1)
     return time_blocks
 
+
 def get_time_blocks_from_busy_data(interviewers) -> list[list[dict[str, datetime]]]:
     """
     Gets all unavailable time blocks for the given interviewers.
@@ -77,37 +78,48 @@ def get_time_blocks_from_busy_data(interviewers) -> list[list[dict[str, datetime
     return unavailable_time_blocks
 
 
-def get_all_available_time_blocks(interviewers, duration, dt=None, unavailable_time_blocks=None) -> list[dict[str, datetime]]:
+def get_available_from_unavailable_time_block(possible_time_blocks, unavailable_time_blocks) -> list[dict[str, datetime]]:
+    """
+    Removes unavailable time ranges from possible time blocks and returns that as a list of dicts
+    :param list[dict[str, datetime]] possible_time_blocks: list of available time blocks [{'start': start_datetime, 'end': end_datetime}, ...]
+    :param list[dict[str, datetime]] unavailable_time_blocks: list of unavailable time blocks [{'start': start_datetime, 'end': end_datetime}, ...]
+    :returns: list of available time blocks [{'start': start_datetime, 'end': end_datetime}, ...]
+    """
+    possible_index = 0
+    possible_length = len(possible_time_blocks)
+    unavailable_index = 0
+    unavailable_length = len(unavailable_time_blocks)
+    available_time_blocks = []
+    while possible_index < possible_length:
+        if unavailable_index >= unavailable_length:
+            available_time_blocks.append(possible_time_blocks[possible_index])
+            possible_index += 1
+        elif possible_time_blocks[possible_index]['end'] <= unavailable_time_blocks[unavailable_index]['start']:
+            available_time_blocks.append(possible_time_blocks[possible_index])
+            possible_index += 1
+        elif possible_time_blocks[possible_index]['start'] >= unavailable_time_blocks[unavailable_index]['end']:
+            unavailable_index += 1
+        else:
+            possible_index += 1
+    return available_time_blocks
+
+
+def get_all_available_time_blocks(interviewers, duration, dt=None, unavailable_time_blocks_list=None) -> list[dict[str, datetime]]:
     """
     Gets all possible time blocks for a given interview duration for the next week for the given interviewers.
-    :param list[int] interviewers: list of interviewer ids
+    :param list[dict] interviewers: dict of interviewers
     :param int duration: duration in minutes of interview
     :param datetime dt: start date and time of interview week
-    :param list[list[dict[str, datetime]]] unavailable_time_blocks: list of unavailable time blocks
+    :param list[list[dict[str, datetime]]] unavailable_time_blocks_list: list of lists of unavailable time blocks
     :returns: available time blocks for the interview [{'start': start_datetime, 'end': end_datetime}, ...]
     Requirements:
         All interviewers must be available for the full slot duration
         All times must be in UTC in ISO 8601 format
     """
-    if not unavailable_time_blocks:
-        unavailable_time_blocks = get_time_blocks_from_busy_data(interviewers)
+    interviewer_ids = [interviewer['id'] for interviewer in interviewers]
+    if not unavailable_time_blocks_list:
+        unavailable_time_blocks_list = get_time_blocks_from_busy_data(interviewer_ids)
     all_possible_time_blocks = get_all_possible_time_blocks(duration, dt=dt)
-    for unavailable_timeblock in unavailable_time_blocks:
-        possible_index = 0
-        possible_length = len(all_possible_time_blocks)
-        unavailable_index = 0
-        unavailable_length = len(unavailable_timeblock)
-        available_time_blocks = []
-        while possible_index < possible_length:
-            if unavailable_index >= unavailable_length:
-                available_time_blocks.append(all_possible_time_blocks[possible_index])
-                possible_index += 1
-            elif all_possible_time_blocks[possible_index]['end'] <= unavailable_timeblock[unavailable_index]['start']:
-                available_time_blocks.append(all_possible_time_blocks[possible_index])
-                possible_index += 1
-            elif all_possible_time_blocks[possible_index]['start'] >= unavailable_timeblock[unavailable_index]['end']:
-                unavailable_index += 1
-            else:
-                possible_index += 1
-        all_possible_time_blocks = available_time_blocks
+    for unavailable_time_block in unavailable_time_blocks_list:
+        all_possible_time_blocks = get_available_from_unavailable_time_block(all_possible_time_blocks, unavailable_time_block)
     return all_possible_time_blocks

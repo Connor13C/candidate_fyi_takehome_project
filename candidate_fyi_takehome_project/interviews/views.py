@@ -32,6 +32,8 @@ def interviews_availability(request, id:int):
     }
     """
     interview = InterviewTemplate.get_json_by_id(id)
-    interviewer_ids = [interviewer['id'] for interviewer in interview.get('interviewers', [])]
-    interview['availableSlots'] = get_all_available_time_blocks(interviewer_ids, interview['durationMinutes'])
+    #TODO change interviewers to match expected
+    # interviewer_ids = [interviewer['id'] for interviewer in interview.get('interviewers', [])]
+    # interview['availableSlots'] = get_all_available_time_blocks(interviewer_ids, interview['durationMinutes'])
+    interview['availableSlots'] = get_all_available_time_blocks(interview.get('interviewers'), interview['durationMinutes'])
     return JsonResponse(interview)
