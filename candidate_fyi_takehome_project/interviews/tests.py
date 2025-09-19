@@ -111,7 +111,7 @@ class InterviewsHelpersTestCase(TestCase):
         }]]
         self.assertEqual(
             len(get_all_available_time_blocks(
-                [1], 60*8, dt=datetime(year=2025, month=1, day=1, hour=9, tzinfo=UTC), unavailable_time_blocks=unavailable_time_blocks
+                [dict(id=1)], 60*8, dt=datetime(year=2025, month=1, day=1, hour=9, tzinfo=UTC), unavailable_time_blocks_list=unavailable_time_blocks
             )),
             3
         )
